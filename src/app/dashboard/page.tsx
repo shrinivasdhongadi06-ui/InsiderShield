@@ -69,11 +69,11 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Security Operations Center
           </h1>
 
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Real-time insider threat monitoring & analysis
           </p>
         </div>
@@ -83,14 +83,14 @@ export default function Dashboard() {
             onClick={() =>
               fetch("/api/seed").then(() => fetchData())
             }
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-all border border-slate-200 shadow-sm"
           >
             Reset Environment
           </button>
 
           <button
             onClick={simulateActivity}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors border border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.3)]"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all border border-transparent shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5"
           >
             Force Simulation
           </button>
