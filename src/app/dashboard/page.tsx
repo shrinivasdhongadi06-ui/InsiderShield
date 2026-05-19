@@ -7,9 +7,9 @@ import AlertPanel from "@/components/AlertPanel";
 import TrustScoreChart from "@/components/TrustScoreChart";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
-  const [logs, setLogs] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [stats, setStats] = useState<any>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -25,8 +25,8 @@ export default function Dashboard() {
       const alertsData = await alertsRes.json();
 
       setStats(statsData);
-      setLogs(logsData);
-      setAlerts(alertsData);
+      setLogs(Array.isArray(logsData) ? logsData : []);
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
