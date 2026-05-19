@@ -98,8 +98,8 @@ export default function EmployeesList() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left">
             <thead className="bg-slate-50">
               <tr>
                 <th className="py-3 px-5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee</th>

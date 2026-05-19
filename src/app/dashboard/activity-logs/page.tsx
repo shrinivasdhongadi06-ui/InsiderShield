@@ -147,7 +147,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <p className="text-sm font-semibold text-slate-900 mb-1">Downloads Over Time</p>
         <p className="text-xs text-slate-400 mb-4">Total file downloads per day</p>
-        <div className="h-[300px] w-full min-w-0">
+        <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={analytics.downloadsByDay.map((d) => ({ ...d, date: shortDate(d.date) }))}>
               <defs>
@@ -170,7 +170,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <p className="text-sm font-semibold text-slate-900 mb-1">Anomaly Score Spikes</p>
         <p className="text-xs text-slate-400 mb-4">Average anomaly score per day</p>
-        <div className="h-[300px] w-full min-w-0">
+        <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={analytics.anomalyByDay.map((d) => ({ ...d, date: shortDate(d.date) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -187,7 +187,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <p className="text-sm font-semibold text-slate-900 mb-1">Trust Score Trend</p>
         <p className="text-xs text-slate-400 mb-4">Average trust score across employees</p>
-        <div className="h-[300px] w-full min-w-0">
+        <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={analytics.trustHistory.map((d) => ({ ...d, date: shortDate(d.date) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -204,7 +204,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <p className="text-sm font-semibold text-slate-900 mb-1">Login Hour Distribution</p>
         <p className="text-xs text-slate-400 mb-4">When employees log in (0–23h)</p>
-        <div className="h-[300px] w-full min-w-0">
+        <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={analytics.loginHours}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -345,8 +345,8 @@ export default function ActivityLogsPage() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   {["Employee", "Action", "Device", "Location", "Downloads", "Files", "Risk", "Time", ""].map((h) => (

@@ -9,7 +9,7 @@ export default function KPIStats({ stats }: { stats: any }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {kpis.map((kpi, i) => (
         <div key={i} className="glass-panel p-6 flex items-center gap-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
           <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${kpi.bg}`}>

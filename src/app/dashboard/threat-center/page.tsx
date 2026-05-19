@@ -357,7 +357,7 @@ export default function ThreatCenterPage() {
       </div>
 
       {/* ── Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Active Threats"
           value={stats.activeThreats}
@@ -418,8 +418,8 @@ export default function ThreatCenterPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 {["Severity", "Employee", "Threat Type", "Risk Score", "Status", "Timestamp", ""].map((h) => (

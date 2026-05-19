@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, AlertTriangle, User, X } from "lucide-react";
+import { Search, Bell, AlertTriangle, User, X, Menu } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface EmpResult {
@@ -162,7 +162,7 @@ function SearchDropdown({
 }
 
 // ─── Main Navbar ────────────────────────────────────────────────────────────────
-export default function Navbar() {
+export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -229,16 +229,22 @@ export default function Navbar() {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-10">
-      <div className="flex items-center text-sm text-slate-500 gap-2">
+    <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
+      <div className="flex items-center text-xs sm:text-sm text-slate-500 gap-2">
+        <button 
+          onClick={onMenuClick}
+          className="p-1.5 -ml-1.5 mr-1 text-slate-500 hover:bg-slate-100 rounded-lg lg:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" /> SOC Active
         </span>
-        <span className="px-2 text-slate-300">|</span>
-        <span>Environment: Production</span>
+        <span className="hidden sm:inline px-2 text-slate-300">|</span>
+        <span className="hidden sm:inline">Environment: Production</span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Smart Search */}
         <div className="relative" ref={wrapperRef}>
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
@@ -247,8 +253,8 @@ export default function Navbar() {
             value={query}
             onChange={handleChange}
             onFocus={() => query.length >= 2 && setOpen(true)}
-            placeholder="Search employees, alerts, logs…"
-            className="bg-slate-50 border border-slate-200 rounded-full pl-9 pr-8 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white w-72 transition-all"
+            placeholder="Search…"
+            className="bg-slate-50 border border-slate-200 rounded-full pl-9 pr-8 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white w-32 sm:w-56 lg:w-72 transition-all"
           />
           {query && (
             <button
@@ -278,8 +284,8 @@ export default function Navbar() {
         </button>
 
         {/* Profile */}
-        <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-          <div className="text-right">
+        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-slate-200">
+          <div className="hidden sm:block text-right">
             <div className="text-sm font-medium text-slate-900">Admin</div>
           </div>
           <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 font-bold shadow-sm">

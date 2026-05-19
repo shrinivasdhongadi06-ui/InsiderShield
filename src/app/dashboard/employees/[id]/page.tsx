@@ -145,7 +145,7 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Clock} label="Login Hours" value={employee.baseline.normalLoginHourRange} color="bg-blue-50 text-blue-600" />
         <StatCard icon={MapPin} label="Primary Location" value={employee.baseline.normalLocation} color="bg-purple-50 text-purple-600" />
         <StatCard icon={Download} label="Daily Downloads" value={`~${employee.baseline.normalDownloads ?? 0} files`} color="bg-green-50 text-green-600" />
@@ -161,7 +161,7 @@ export default function EmployeeDashboard() {
             <ShieldCheck className="w-4 h-4 text-blue-600" /> Trust Score Evolution
           </h3>
           <p className="text-xs text-slate-500 mb-4">Historical trust score over time. Red line = isolation threshold (50).</p>
-          <div className="w-full h-[280px] min-w-0">
+          <div className="w-full min-w-0 h-[220px] sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trustChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -242,7 +242,7 @@ export default function EmployeeDashboard() {
             <Download className="w-4 h-4 text-blue-600" /> Download Behavior vs Baseline
           </h3>
           <p className="text-xs text-slate-500 mb-4">Recent activity compared to expected baseline. Orange bar = baseline threshold.</p>
-          <div className="w-full h-[200px] min-w-0">
+          <div className="w-full min-w-0 h-[200px] sm:h-[250px] lg:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={downloadChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -264,8 +264,8 @@ export default function EmployeeDashboard() {
           <h3 className="font-semibold text-slate-900">Recent Activity Log</h3>
           <span className="ml-auto text-xs text-slate-500">{logs.length} events</span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left">
             <thead className="bg-slate-50">
               <tr>
                 <th className="py-3 px-5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>

@@ -100,18 +100,18 @@ export default function Dashboard() {
       <KPIStats stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="h-[350px] w-full">
+        <div className="lg:col-span-2 w-full min-w-0">
+          <div className="w-full min-w-0 h-[250px] sm:h-[300px] lg:h-[350px]">
             <TrustScoreChart />
           </div>
         </div>
 
-        <div className="lg:col-span-1 h-[350px]">
+        <div className="lg:col-span-1 h-[350px] w-full min-w-0">
           <AlertPanel alerts={alerts} />
         </div>
       </div>
 
-      <div className="h-[400px]">
+      <div className="w-full min-w-0 h-[300px] sm:h-[350px] lg:h-[400px]">
         <ActivityFeed logs={logs} />
       </div>
     </div>
