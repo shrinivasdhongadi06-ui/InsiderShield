@@ -6,7 +6,7 @@ export interface IAlert extends Document {
   title: string;
   description: string;
   reasoning: string[];
-  status: 'Open' | 'Investigating' | 'Resolved';
+  status: 'Open' | 'Investigating' | 'Resolved' | 'Isolated';
   timestamp: Date;
 }
 
@@ -17,7 +17,7 @@ const AlertSchema = new Schema<IAlert>(
     title: { type: String, required: true },
     description: { type: String, required: true },
     reasoning: [{ type: String }], // AI Explainability human-readable strings
-    status: { type: String, enum: ['Open', 'Investigating', 'Resolved'], default: 'Open' },
+    status: { type: String, enum: ['Open', 'Investigating', 'Resolved', 'Isolated'], default: 'Open' },
     timestamp: { type: Date, default: Date.now },
   },
   { timestamps: true }

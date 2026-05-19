@@ -8,6 +8,13 @@ export interface IActivityLog extends Document {
   device: string;
   ipAddress: string;
   riskScore: number; // Positive for normal, negative for suspicious
+  loginHour: number;
+  downloads: number;
+  filesAccessed: number;
+  location: string;
+  sessionDuration: number;
+  anomalyScore: number;
+  trustImpact: number;
 }
 
 const ActivityLogSchema = new Schema<IActivityLog>(
@@ -19,6 +26,13 @@ const ActivityLogSchema = new Schema<IActivityLog>(
     device: { type: String },
     ipAddress: { type: String },
     riskScore: { type: Number, default: 0 },
+    loginHour: { type: Number },
+    downloads: { type: Number },
+    filesAccessed: { type: Number },
+    location: { type: String },
+    sessionDuration: { type: Number },
+    anomalyScore: { type: Number, default: 0 },
+    trustImpact: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

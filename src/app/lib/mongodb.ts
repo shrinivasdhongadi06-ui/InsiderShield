@@ -8,9 +8,12 @@ if (!MONGODB_URI) {
 
 export async function connectDB() {
   try {
-    await mongoose.connect(MONGODB_URI);
+    if (mongoose.connection.readyState === 1) {
+  return;
+}
 
-    console.log("MongoDB Connected");
+await mongoose.connect(MONGODB_URI);
+console.log("MongoDB Connected");
   } catch (error) {
     console.log(error);
   }

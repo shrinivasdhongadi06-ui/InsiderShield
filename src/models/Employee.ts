@@ -8,10 +8,14 @@ export interface IEmployee extends Document {
   currentTrustScore: number;
   status: 'Active' | 'Isolated' | 'Suspended';
   baseline: {
-    usualLoginHours: string[];
-    trustedDevices: string[];
-    usualIPs: string[];
-  };
+  normalLoginHourRange: string;
+  trustedDevices: string[];
+  usualIPs: string[];
+  normalLocation: string;
+  normalDownloads: number;
+  normalFilesAccessed: number;
+  normalSessionDuration: number;
+};
 }
 
 const EmployeeSchema = new Schema<IEmployee>(
@@ -23,10 +27,39 @@ const EmployeeSchema = new Schema<IEmployee>(
     currentTrustScore: { type: Number, default: 100 },
     status: { type: String, enum: ['Active', 'Isolated', 'Suspended'], default: 'Active' },
     baseline: {
-      usualLoginHours: [{ type: String }],
-      trustedDevices: [{ type: String }],
-      usualIPs: [{ type: String }],
-    },
+  normalLoginHourRange: {
+    type: String,
+    default: '09:00-17:00',
+  },
+
+  trustedDevices: [{
+    type: String,
+  }],
+
+  usualIPs: [{
+    type: String,
+  }],
+
+  normalLocation: {
+    type: String,
+    default: 'Office',
+  },
+
+  normalDownloads: {
+    type: Number,
+    default: 5,
+  },
+
+  normalFilesAccessed: {
+    type: Number,
+    default: 20,
+  },
+
+  normalSessionDuration: {
+    type: Number,
+    default: 480,
+  },
+},
   },
   { timestamps: true }
 );

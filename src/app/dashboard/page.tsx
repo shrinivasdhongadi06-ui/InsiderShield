@@ -79,14 +79,14 @@ export default function Dashboard() {
         </div>
 
         <div className="flex gap-3">
-          <button
+          {/* <button
             onClick={() =>
               fetch("/api/seed").then(() => fetchData())
             }
             className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-all border border-slate-200 shadow-sm"
           >
             Reset Environment
-          </button>
+          </button> */}
 
           <button
             onClick={simulateActivity}
