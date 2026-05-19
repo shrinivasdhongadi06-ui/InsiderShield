@@ -21,7 +21,7 @@ AI-powered insider threat detection system built to identify suspicious employee
 - Backend: Spring Boot
 - Database: MongoDB Atlas
 - Visualization: Recharts
-- Deployment: Vercel + Railway
+- Deployment: Vercel
 
 ---
 
