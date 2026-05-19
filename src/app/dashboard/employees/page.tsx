@@ -35,10 +35,12 @@ export default function EmployeesList() {
   }, []);
 
   const filtered = employees.filter((emp) => {
+    const q = searchTerm.toLowerCase();
     const matchSearch =
-      emp.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.role?.toLowerCase().includes(searchTerm.toLowerCase());
+      emp.name?.toLowerCase().includes(q) ||
+      emp.department?.toLowerCase().includes(q) ||
+      emp.role?.toLowerCase().includes(q) ||
+      emp.email?.toLowerCase().includes(q);
     const matchStatus = statusFilter === "All" || emp.status === statusFilter;
     return matchSearch && matchStatus;
   });

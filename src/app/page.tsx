@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Shield, Lock } from 'lucide-react';
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
       {/* Background decorations */}
@@ -19,7 +25,7 @@ export default function LoginPage() {
 
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Analyst ID</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Admin</label>
             <input 
               type="text" 
               className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
@@ -31,12 +37,23 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Access Token</label>
             <div className="relative">
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"}
                 className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
                 placeholder="••••••••••••"
                 defaultValue="password123"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" />
+              {/* <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" /> */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
             </div>
           </div>
           

@@ -41,12 +41,12 @@ export default function Sidebar() {
 
         <NavLink href="/dashboard" icon={LayoutDashboard}>Overview</NavLink>
         <NavLink href="/dashboard/employees" icon={Users}>Employees</NavLink>
-        <NavLink href="#" icon={AlertTriangle} badge={0}>Threat Center</NavLink>
-        <NavLink href="#" icon={Activity}>Activity Logs</NavLink>
+        <NavLink href="/dashboard/threat-center" icon={AlertTriangle}>Threat Center</NavLink>
+        <NavLink href="/dashboard/activity-logs" icon={Activity}>Activity Logs</NavLink>
       </div>
 
       <div className="p-4 border-t border-slate-200 space-y-1">
-        <NavLink href="#" icon={Settings}>Settings</NavLink>
+        <NavLink href="/dashboard/settings" icon={Settings}>Settings</NavLink>
         <Link
           href="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
