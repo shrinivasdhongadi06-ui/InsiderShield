@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/app/lib/mongodb';
+import { NextRequest } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
 import { Employee } from '@/models/Employee';
 import { Alert } from '@/models/Alert';
+import { successResponse, errorResponse } from '@/lib/apiHandler';
+import { QUERY_LIMITS } from '@/constants';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +13,7 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get('q')?.trim();
 
     if (!q || q.length < 2) {
-      return NextResponse.json({ employees: [], alerts: [] });
+      return successResponse({ employees: [], alerts: [] });
     }
 
     const regex = new RegExp(q, 'i');
@@ -21,19 +23,21 @@ export async function GET(req: NextRequest) {
         $or: [{ name: regex }, { department: regex }, { role: regex }, { email: regex }],
       })
         .select('name email department role currentTrustScore status')
-        .limit(6)
+        .limit(QUERY_LIMITS.SEARCH_EMPLOYEES)
         .lean(),
 
       Alert.find({ $or: [{ title: regex }, { description: regex }] })
         .select('title severity status timestamp employeeId')
         .populate('employeeId', 'name')
         .sort({ timestamp: -1 })
-        .limit(4)
+        .limit(QUERY_LIMITS.SEARCH_ALERTS)
         .lean(),
     ]);
 
-    return NextResponse.json({ employees, alerts });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return successResponse({ employees, alerts });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Search failed';
+    console.error('[/api/search]', message);
+    return errorResponse(message);
   }
 }

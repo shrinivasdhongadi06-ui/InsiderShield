@@ -38,11 +38,13 @@ export default function AddEmployee() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      const data = await res.json();
-      if (res.ok) {
+      const json = await res.json();
+      // Unwrap standardized { success, data } response
+      const isSuccess = json?.success === true || res.ok;
+      if (isSuccess) {
         router.push("/dashboard/employees");
       } else {
-        setError(data.error || "Failed to add employee. Please try again.");
+        setError(json?.error || "Failed to add employee. Please try again.");
       }
     } catch {
       setError("Network error. Please check your connection.");

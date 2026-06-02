@@ -1,17 +1,16 @@
 "use client";
 
 import React from "react";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
-  Activity,
   Search,
   ChevronDown,
   ChevronRight,
   Radio,
   BrainCircuit,
   RefreshCw,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   AreaChart,
@@ -26,65 +25,29 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface LogDoc {
-  _id: string;
-  action: string;
-  timestamp: string;
-  device: string;
-  ipAddress: string;
-  riskScore: number;
-  loginHour: number;
-  downloads: number;
-  filesAccessed: number;
-  location: string;
-  sessionDuration: number;
-  anomalyScore: number;
-  trustImpact: number;
-  details: string;
-  employeeId?: { _id: string; name: string; department: string; email: string };
-}
-
-interface Analytics {
-  downloadsByDay: { date: string; downloads: number }[];
-  anomalyByDay: { date: string; anomaly: number }[];
-  loginHours: { hour: number; count: number }[];
-  trustHistory: { date: string; avgTrust: number }[];
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function getRiskLevel(log: LogDoc): "critical" | "suspicious" | "normal" {
-  if (log.anomalyScore >= 70 || log.riskScore < -50) return "critical";
-  if (log.anomalyScore >= 30 || log.riskScore < 0) return "suspicious";
-  return "normal";
-}
-
-const RISK_COLORS = {
-  critical: "bg-red-100 text-red-700 border border-red-200",
-  suspicious: "bg-orange-100 text-orange-700 border border-orange-200",
-  normal: "bg-green-100 text-green-700 border border-green-200",
-};
-
-const RISK_DOT = {
-  critical: "bg-red-500",
-  suspicious: "bg-orange-500",
-  normal: "bg-green-500",
-};
+import type { IActivityLog, IActivityAnalytics, IPaginatedResponse, IPaginationMeta } from "@/types";
+import { getRiskLevel, RISK_BADGE_CLASSES, RISK_DOT_CLASSES } from "@/utils";
+import { POLLING_INTERVALS } from "@/constants";
+import { safeArray, formatShortDate } from "@/utils";
+import { apiClient } from "@/services/apiClient";
+import Pagination from "@/components/Pagination";
+import TableSkeleton from "@/components/TableSkeleton";
 
 // ─── Live Feed Entry ──────────────────────────────────────────────────────────
-function FeedEntry({ log, isNew }: { log: LogDoc; isNew: boolean }) {
-  const risk = getRiskLevel(log);
+
+function FeedEntry({ log, isNew }: { log: IActivityLog; isNew: boolean }) {
+  const emp = typeof log.employeeId === "object" ? log.employeeId as any : null;
+  const risk = getRiskLevel(log.anomalyScore, log.riskScore);
   return (
     <div
       className={`flex items-start gap-3 py-2.5 px-3 rounded-lg transition-all ${
         isNew ? "animate-pulse bg-blue-50/60" : "hover:bg-slate-50"
       }`}
     >
-      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${RISK_DOT[risk]}`} />
+      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${RISK_DOT_CLASSES[risk]}`} />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-700">
-          <span className="font-semibold">{log.employeeId?.name || "Unknown"}</span>{" "}
+          <span className="font-semibold">{emp?.name || "Unknown"}</span>{" "}
           <span className="text-slate-500">{log.action}</span>
         </p>
         <p className="text-[10px] text-slate-400 mt-0.5">
@@ -96,10 +59,11 @@ function FeedEntry({ log, isNew }: { log: LogDoc; isNew: boolean }) {
 }
 
 // ─── Expanded Row Details ─────────────────────────────────────────────────────
-function ExpandedDetails({ log }: { log: LogDoc }) {
+
+function ExpandedDetails({ log }: { log: IActivityLog }) {
   return (
-    <tr>
-      <td colSpan={8} className="bg-slate-50 px-6 py-4 border-b border-slate-100">
+    <tr className="bg-slate-50/40">
+      <td colSpan={9} className="px-6 py-4 border-b border-slate-100">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           {[
             { label: "Login Hour", value: `${log.loginHour ?? "N/A"}:00` },
@@ -136,10 +100,9 @@ function ExpandedDetails({ log }: { log: LogDoc }) {
 }
 
 // ─── Analytics Charts Section ─────────────────────────────────────────────────
-function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
-  if (!analytics) return null;
 
-  const shortDate = (d: string) => d.split("-").slice(1).join("/");
+function AnalyticsSection({ analytics }: { analytics: IActivityAnalytics | null }) {
+  if (!analytics) return null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
@@ -149,7 +112,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
         <p className="text-xs text-slate-400 mb-4">Total file downloads per day</p>
         <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={analytics.downloadsByDay.map((d) => ({ ...d, date: shortDate(d.date) }))}>
+            <AreaChart data={analytics.downloadsByDay.map((d) => ({ ...d, date: formatShortDate(d.date) }))}>
               <defs>
                 <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
@@ -172,7 +135,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
         <p className="text-xs text-slate-400 mb-4">Average anomaly score per day</p>
         <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={analytics.anomalyByDay.map((d) => ({ ...d, date: shortDate(d.date) }))}>
+            <BarChart data={analytics.anomalyByDay.map((d) => ({ ...d, date: formatShortDate(d.date) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#cbd5e1" />
               <YAxis tick={{ fontSize: 10 }} stroke="#cbd5e1" />
@@ -189,7 +152,7 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
         <p className="text-xs text-slate-400 mb-4">Average trust score across employees</p>
         <div className="w-full min-w-0 h-[220px] sm:h-[280px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={analytics.trustHistory.map((d) => ({ ...d, date: shortDate(d.date) }))}>
+            <LineChart data={analytics.trustHistory.map((d) => ({ ...d, date: formatShortDate(d.date) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#cbd5e1" />
               <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#cbd5e1" />
@@ -221,35 +184,55 @@ function AnalyticsSection({ analytics }: { analytics: Analytics | null }) {
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
+
 const FILTER_OPTIONS = ["All", "Normal", "Suspicious", "Critical"] as const;
 type FilterOption = (typeof FILTER_OPTIONS)[number];
 
 export default function ActivityLogsPage() {
-  const [logs, setLogs] = useState<LogDoc[]>([]);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [logs, setLogs] = useState<IActivityLog[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<IPaginationMeta | null>(null);
+  const [analytics, setAnalytics] = useState<IActivityAnalytics | null>(null);
+  
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterOption>("All");
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("timestamp");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const prevIdsRef = useRef<Set<string>>(new Set());
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
+    setPage(1);
+  };
+
   const fetchLogs = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const params = new URLSearchParams();
-      if (filter !== "All") params.set("filter", filter.toLowerCase());
-      if (search) params.set("search", search);
+      const queryParams: Record<string, any> = {
+        page,
+        pageSize: 10,
+        sortBy,
+        sortOrder,
+      };
+      if (filter !== "All") queryParams.filter = filter.toLowerCase();
+      if (search) queryParams.search = search;
 
       const [logsRes, analyticsRes] = await Promise.all([
-        fetch(`/api/activity?${params.toString()}`),
-        fetch("/api/activity/analytics"),
+        apiClient.get<IPaginatedResponse<IActivityLog>>("/api/activity", queryParams),
+        apiClient.get<IActivityAnalytics>("/api/activity/analytics"),
       ]);
-      const logsData: LogDoc[] = await logsRes.json();
-      const analyticsData = await analyticsRes.json();
 
-      const incoming = Array.isArray(logsData) ? logsData : [];
+      const incoming = safeArray<IActivityLog>(logsRes?.items);
       const incomingIds = new Set(incoming.map((l) => l._id));
       const freshIds = new Set<string>();
       incomingIds.forEach((id) => {
@@ -260,35 +243,31 @@ export default function ActivityLogsPage() {
       setTimeout(() => setNewIds(new Set()), 3000);
 
       setLogs(incoming);
-      setAnalytics(analyticsData);
+      if (logsRes?.pagination) {
+        setPaginationMeta(logsRes.pagination);
+      }
+      if (analyticsRes && typeof analyticsRes === "object") {
+        setAnalytics(analyticsRes);
+      }
     } catch (e) {
       console.error("Failed to fetch activity logs:", e);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [filter, search]);
+  }, [filter, search, page, sortBy, sortOrder]);
 
   useEffect(() => {
     setLoading(true);
     fetchLogs(true);
-  }, [filter, search, fetchLogs]);
+  }, [filter, search, page, sortBy, sortOrder, fetchLogs]);
 
   useEffect(() => {
-    const interval = setInterval(() => fetchLogs(true), 5000);
+    const interval = setInterval(() => fetchLogs(true), POLLING_INTERVALS.ACTIVITY_LOGS);
     return () => clearInterval(interval);
   }, [fetchLogs]);
 
-  // Live feed = top 8 most recent
   const liveFeed = logs.slice(0, 8);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -297,7 +276,7 @@ export default function ActivityLogsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Activity Logs</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Real-time employee behavior monitoring & audit trail
+            Real-time employee behavior monitoring &amp; audit trail
           </p>
         </div>
         <button
@@ -313,108 +292,156 @@ export default function ActivityLogsPage() {
       {/* ── Main grid: Table + Live Feed */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Table (3/4) */}
-        <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Search + Filters */}
-          <div className="p-4 border-b border-slate-100 flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search employee, device, location…"
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
+        <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between min-h-[500px]">
+          <div>
+            {/* Search + Filters */}
+            <div className="p-4 border-b border-slate-100 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  placeholder="Search employee, device, location…"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+              <div className="flex gap-1">
+                {FILTER_OPTIONS.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => { setFilter(f); setPage(1); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      filter === f
+                        ? "bg-blue-600 text-white shadow-sm border border-blue-600"
+                        : "text-slate-600 hover:bg-slate-100 border border-slate-200 bg-white"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-slate-400 ml-auto">
+                {paginationMeta ? `${paginationMeta.total} records` : "Loading..."}
+              </span>
             </div>
-            <div className="flex gap-1">
-              {FILTER_OPTIONS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    filter === f
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100 border border-slate-200"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
+
+            {/* Table */}
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Employee
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Device
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th
+                      onClick={() => handleSort("downloads")}
+                      className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        Downloads
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort("filesAccessed")}
+                      className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        Files
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort("anomalyScore")}
+                      className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        Risk
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort("timestamp")}
+                      className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        Time
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {loading ? (
+                    <TableSkeleton cols={9} rows={8} />
+                  ) : logs.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
+                        No activity logs found.
+                      </td>
+                    </tr>
+                  ) : (
+                    logs.map((log) => {
+                      const emp = typeof log.employeeId === "object" ? log.employeeId as any : null;
+                      const risk = getRiskLevel(log.anomalyScore, log.riskScore);
+                      const isExpanded = expandedId === log._id;
+                      return (
+                        <React.Fragment key={log._id}>
+                          <tr
+                            onClick={() => setExpandedId(isExpanded ? null : log._id)}
+                            className={`cursor-pointer transition-colors group ${
+                              newIds.has(log._id) ? "bg-blue-50/50" : "hover:bg-slate-50"
+                            }`}
+                          >
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-semibold text-slate-900">{emp?.name || "Unknown"}</p>
+                              <p className="text-xs text-slate-400">{emp?.department || ""}</p>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-700 max-w-[130px]">
+                              <span className="truncate block">{log.action}</span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-slate-600">{log.device || "—"}</td>
+                            <td className="px-4 py-3 text-xs text-slate-600">{log.location || "—"}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-slate-700">{log.downloads ?? 0}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-slate-700">{log.filesAccessed ?? 0}</td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${RISK_BADGE_CLASSES[risk]}`}>
+                                {risk}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                              {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                            </td>
+                            <td className="px-4 py-3">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-blue-500" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                              )}
+                            </td>
+                          </tr>
+                          {isExpanded && <ExpandedDetails log={log} />}
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-            <span className="text-xs text-slate-400 ml-auto">{logs.length} records</span>
           </div>
 
-          {/* Table */}
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  {["Employee", "Action", "Device", "Location", "Downloads", "Files", "Risk", "Time", ""].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-400">
-                      No activity logs found.
-                    </td>
-                  </tr>
-                ) : (
-                  logs.map((log) => {
-                    const risk = getRiskLevel(log);
-                    const isExpanded = expandedId === log._id;
-                    return (
-                      <React.Fragment key={log._id}>
-                        <tr
-                          onClick={() => setExpandedId(isExpanded ? null : log._id)}
-                          className={`cursor-pointer transition-colors group ${
-                            newIds.has(log._id) ? "bg-blue-50/50" : "hover:bg-slate-50"
-                          }`}
-                        >
-                          <td className="px-4 py-3">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {log.employeeId?.name || "Unknown"}
-                            </p>
-                            <p className="text-xs text-slate-400">{log.employeeId?.department || ""}</p>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-700 max-w-[130px]">
-                            <span className="truncate block">{log.action}</span>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-slate-600">{log.device || "—"}</td>
-                          <td className="px-4 py-3 text-xs text-slate-600">{log.location || "—"}</td>
-                          <td className="px-4 py-3 text-xs font-medium text-slate-700">{log.downloads ?? 0}</td>
-                          <td className="px-4 py-3 text-xs font-medium text-slate-700">{log.filesAccessed ?? 0}</td>
-                          <td className="px-4 py-3">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${RISK_COLORS[risk]}`}>
-                              {risk}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                            {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
-                          </td>
-                          <td className="px-4 py-3">
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4 text-blue-500" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
-                            )}
-                          </td>
-                        </tr>
-                        {isExpanded && <ExpandedDetails log={log} />}
-                      </React.Fragment>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Pagination meta={paginationMeta} onPageChange={setPage} />
         </div>
 
         {/* Live Feed (1/4) */}
@@ -429,8 +456,20 @@ export default function ActivityLogsPage() {
               Live
             </span>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {liveFeed.length === 0 ? (
+          <div className="flex-1 overflow-y-auto p-2 space-y-0.5 max-h-[440px]">
+            {loading ? (
+              <div className="space-y-3 p-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="animate-pulse flex items-start gap-2.5">
+                    <div className="w-2 h-2 rounded-full bg-slate-200 mt-1.5" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-3 bg-slate-200 rounded-md w-2/3" />
+                      <div className="h-2 bg-slate-100 rounded-md w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : liveFeed.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-8">No recent activity.</p>
             ) : (
               liveFeed.map((log) => (
@@ -438,7 +477,7 @@ export default function ActivityLogsPage() {
               ))
             )}
           </div>
-          <div className="p-3 border-t border-slate-100 text-center">
+          <div className="p-3 border-t border-slate-100 text-center bg-slate-50">
             <p className="text-[10px] text-slate-400">Auto-refreshes every 5 seconds</p>
           </div>
         </div>

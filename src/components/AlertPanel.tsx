@@ -4,31 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { AlertOctagon, BrainCircuit } from "lucide-react";
-
-interface Alert {
-  _id?: string;
-  severity: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  reasoning?: string[];
-  employeeId?: { _id?: string; name?: string } | string;
-}
+import type { IAlert } from "@/types";
 
 export default function AlertPanel({
   alerts,
 }: {
-  alerts: Alert[] | any;
+  alerts: IAlert[] | any;
 }) {
   const router = useRouter();
-  const safeAlerts: Alert[] = Array.isArray(alerts) ? alerts : [];
+  const safeAlerts: IAlert[] = Array.isArray(alerts) ? alerts : [];
 
   // Track dismissed IDs + which ones are animating out
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
 
-  const getId = (alert: Alert, i: number) =>
-    alert._id ?? `fallback-${i}`;
+  const getId = (alert: IAlert, i: number) =>
+    (alert._id as string | undefined) ?? `fallback-${i}`;
 
   const handleDismiss = (id: string) => {
     // Start fade-out
@@ -44,15 +35,15 @@ export default function AlertPanel({
     }, 350);
   };
 
-  const handleInvestigate = (alert: Alert) => {
+  const handleInvestigate = (alert: IAlert) => {
     const empId =
-      typeof alert.employeeId === "object"
-        ? alert.employeeId?._id
+      typeof alert.employeeId === 'object'
+        ? (alert.employeeId as any)?._id
         : alert.employeeId;
     if (empId) {
       router.push(`/dashboard/employees/${empId}`);
     } else {
-      router.push("/dashboard/threat-center");
+      router.push('/dashboard/threat-center');
     }
   };
 

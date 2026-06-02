@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings,
   Shield,
@@ -13,6 +13,8 @@ import {
   ChevronRight,
   CheckCircle,
 } from "lucide-react";
+import { loadSettings, saveSettings } from "@/services/settingsStore";
+import type { PlatformSettings } from "@/services/settingsStore";
 
 // ─── Reusable Sub-Components ──────────────────────────────────────────────────
 
@@ -169,43 +171,43 @@ function StatusDot({ ok = true }: { ok?: boolean }) {
   );
 }
 
+// ─── Trust Engine Live Status Badge ──────────────────────────────────────────
+
+function EngineStatusBadge({ sensitivity }: { sensitivity: string }) {
+  const colors: Record<string, string> = {
+    Conservative: "bg-blue-50 text-blue-700 border-blue-200",
+    Balanced:     "bg-green-50 text-green-700 border-green-200",
+    Aggressive:   "bg-red-50 text-red-700 border-red-200",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${colors[sensitivity] ?? colors.Balanced}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+      Trust Engine: {sensitivity}
+    </span>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
-  // Threat Detection
-  const [lowThreshold, setLowThreshold] = useState(30);
-  const [highThreshold, setHighThreshold] = useState(65);
-  const [criticalThreshold, setCriticalThreshold] = useState(85);
-  const [autoIsolate, setAutoIsolate] = useState(true);
-  const [sensitivity, setSensitivity] = useState("Balanced");
-
-  // Monitoring
-  const [monitorLogin, setMonitorLogin] = useState(true);
-  const [monitorDevice, setMonitorDevice] = useState(true);
-  const [monitorDownloads, setMonitorDownloads] = useState(true);
-  const [monitorSession, setMonitorSession] = useState(true);
-  const [monitorLocation, setMonitorLocation] = useState(true);
-  const [monitorFiles, setMonitorFiles] = useState(true);
-  const [frequency, setFrequency] = useState("Every 5 seconds");
-
-  // AI Engine
-  const [aiConfidence, setAiConfidence] = useState(82);
-  const [explainability, setExplainability] = useState("Advanced");
-  const [trustDecay, setTrustDecay] = useState(50);
-
-  // Alerts
-  const [dashboardAlerts, setDashboardAlerts] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(false);
-  const [socEscalation, setSocEscalation] = useState(true);
-  const [autoEscalation, setAutoEscalation] = useState(false);
-
-  // Demo Mode
-  const [demoEnabled, setDemoEnabled] = useState(true);
-  const [demoScenario, setDemoScenario] = useState("Insider Threat Scenario");
-
-  // Save state
+  const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [saved, setSaved] = useState(false);
+  const [demoScenario, setDemoScenario] = useState("Insider Threat Scenario");
+  const [demoEnabled, setDemoEnabled] = useState(true);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    setSettings(loadSettings());
+  }, []);
+
+  if (!settings) return null; // wait for hydration
+
+  const update = (patch: Partial<PlatformSettings>) => {
+    setSettings((prev) => prev ? { ...prev, ...patch } : prev);
+  };
 
   const handleSave = () => {
+    if (!settings) return;
+    saveSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -220,8 +222,11 @@ export default function SettingsPage() {
             Platform Settings
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Configure threat detection, AI engine, and monitoring parameters
+            Configure threat detection, trust engine, and monitoring parameters
           </p>
+          <div className="mt-2">
+            <EngineStatusBadge sensitivity={settings.sensitivity} />
+          </div>
         </div>
         <button
           onClick={handleSave}
@@ -233,7 +238,7 @@ export default function SettingsPage() {
         >
           {saved ? (
             <>
-              <CheckCircle className="w-4 h-4" /> Saved
+              <CheckCircle className="w-4 h-4" /> Saved to Trust Engine
             </>
           ) : (
             "Save Changes"
@@ -241,31 +246,60 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* ── 1. Threat Detection */}
+      {/* ── 1. Threat Detection — Trust Engine Thresholds */}
       <SectionCard
-        title="Threat Detection"
-        subtitle="Risk thresholds, auto-isolation and detection sensitivity"
+        title="Trust Engine Thresholds"
+        subtitle="These values directly control isolation, alert severity, and risk escalation"
         icon={Shield}
         iconColor="bg-red-50 text-red-600"
       >
-        <Slider label="Low Risk Threshold" value={lowThreshold} min={10} max={50} unit="%" color="bg-blue-50 text-blue-700" onChange={setLowThreshold} />
-        <Slider label="High Risk Threshold" value={highThreshold} min={51} max={80} unit="%" color="bg-orange-50 text-orange-700" onChange={setHighThreshold} />
-        <Slider label="Critical Threshold" value={criticalThreshold} min={81} max={99} unit="%" color="bg-red-50 text-red-700" onChange={setCriticalThreshold} />
+        <Slider
+          label="Isolation Threshold (auto-isolate below this trust score)"
+          value={settings.isolationThreshold}
+          min={10}
+          max={50}
+          unit=" pts"
+          color="bg-red-50 text-red-700"
+          onChange={(v) => update({ isolationThreshold: v })}
+        />
+        <Slider
+          label="High Anomaly Threshold (anomaly score for High severity)"
+          value={settings.highThreshold}
+          min={10}
+          max={40}
+          unit=" pts"
+          color="bg-orange-50 text-orange-700"
+          onChange={(v) => update({ highThreshold: v })}
+        />
+        <Slider
+          label="Critical Anomaly Threshold (anomaly score for Critical severity)"
+          value={settings.criticalThreshold}
+          min={30}
+          max={80}
+          unit=" pts"
+          color="bg-rose-50 text-rose-700"
+          onChange={(v) => update({ criticalThreshold: v })}
+        />
         <div className="border-t border-slate-100 pt-4">
           <Toggle
             label="Auto-Isolate High-Risk Sessions"
-            sub="Automatically suspend access when critical threshold is crossed"
-            checked={autoIsolate}
-            onChange={setAutoIsolate}
+            sub="Automatically suspend access when isolation threshold is crossed"
+            checked={settings.autoIsolate}
+            onChange={(v) => update({ autoIsolate: v })}
           />
         </div>
         <div className="border-t border-slate-100 pt-4">
           <RadioGroup
-            label="Detection Sensitivity"
+            label="Detection Sensitivity — affects all trust score calculations"
             options={["Conservative", "Balanced", "Aggressive"]}
-            value={sensitivity}
-            onChange={setSensitivity}
+            value={settings.sensitivity}
+            onChange={(v) => update({ sensitivity: v as PlatformSettings['sensitivity'] })}
           />
+          <div className="mt-2 text-xs text-slate-400">
+            {settings.sensitivity === 'Conservative' && '↓ 0.7× multiplier — attenuates risk signals, fewer false positives'}
+            {settings.sensitivity === 'Balanced'     && '1.0× multiplier — default trust engine behavior'}
+            {settings.sensitivity === 'Aggressive'   && '↑ 1.35× multiplier — amplifies risk signals, higher sensitivity'}
+          </div>
         </div>
       </SectionCard>
 
@@ -277,68 +311,55 @@ export default function SettingsPage() {
         iconColor="bg-blue-50 text-blue-600"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Toggle label="Monitor Login Hours" checked={monitorLogin} onChange={setMonitorLogin} />
-          <Toggle label="Monitor Device Usage" checked={monitorDevice} onChange={setMonitorDevice} />
-          <Toggle label="Monitor Downloads" checked={monitorDownloads} onChange={setMonitorDownloads} />
-          <Toggle label="Monitor Session Duration" checked={monitorSession} onChange={setMonitorSession} />
-          <Toggle label="Monitor Location Changes" checked={monitorLocation} onChange={setMonitorLocation} />
-          <Toggle label="Monitor File Access Patterns" checked={monitorFiles} onChange={setMonitorFiles} />
-        </div>
-        <div className="border-t border-slate-100 pt-4">
-          <RadioGroup
-            label="Monitoring Frequency"
-            options={["Real-time", "Every 5 seconds", "Every 30 seconds", "Every 1 minute"]}
-            value={frequency}
-            onChange={setFrequency}
-          />
+          <Toggle label="Monitor Login Hours"         checked={settings.monitorLogin}     onChange={(v) => update({ monitorLogin: v })} />
+          <Toggle label="Monitor Device Usage"        checked={settings.monitorDevice}    onChange={(v) => update({ monitorDevice: v })} />
+          <Toggle label="Monitor Downloads"           checked={settings.monitorDownloads} onChange={(v) => update({ monitorDownloads: v })} />
+          <Toggle label="Monitor Session Duration"    checked={settings.monitorSession}   onChange={(v) => update({ monitorSession: v })} />
+          <Toggle label="Monitor Location Changes"    checked={settings.monitorLocation}  onChange={(v) => update({ monitorLocation: v })} />
+          <Toggle label="Monitor File Access Patterns" checked={settings.monitorFiles}   onChange={(v) => update({ monitorFiles: v })} />
         </div>
       </SectionCard>
 
-      {/* ── 3. AI Engine */}
+      {/* ── 3. Trust Intelligence Engine */}
       <SectionCard
-        title="AI Engine"
-        subtitle="Machine learning confidence, explainability and trust decay settings"
+        title="Trust Intelligence Engine"
+        subtitle="Behavioral trust decay, compounding anomaly detection, and explainability controls"
         icon={BrainCircuit}
         iconColor="bg-indigo-50 text-indigo-600"
       >
-        <Slider
-          label="AI Confidence Threshold"
-          value={aiConfidence}
-          min={50}
-          max={99}
-          unit="%"
-          color="bg-indigo-50 text-indigo-700"
-          onChange={setAiConfidence}
-        />
-        <div className="border-t border-slate-100 pt-4">
-          <RadioGroup
-            label="Explainability Mode"
-            options={["Basic", "Advanced", "Forensic"]}
-            value={explainability}
-            onChange={setExplainability}
-          />
-        </div>
-        <div className="border-t border-slate-100 pt-4">
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-sm font-medium text-slate-800">Trust Score Decay Sensitivity</p>
-              <span className="text-xs text-slate-500 font-medium">
-                {trustDecay < 34 ? "Conservative" : trustDecay < 67 ? "Balanced" : "Aggressive"}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={trustDecay}
-              onChange={(e) => setTrustDecay(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
-            />
-            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-              <span>Conservative</span>
-              <span>Aggressive</span>
-            </div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-sm font-medium text-slate-800">Trust Score Decay Sensitivity</p>
+            <span className="text-xs text-slate-500 font-medium">
+              {settings.trustDecaySensitivity < 34
+                ? "Conservative"
+                : settings.trustDecaySensitivity < 67
+                ? "Balanced"
+                : "Aggressive"}
+            </span>
           </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={settings.trustDecaySensitivity}
+            onChange={(e) => update({ trustDecaySensitivity: Number(e.target.value) })}
+            className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+          />
+          <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+            <span>Conservative (slow decay)</span>
+            <span>Aggressive (fast decay)</span>
+          </div>
+        </div>
+
+        {/* Live Trust Engine summary */}
+        <div className="mt-2 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800 space-y-1">
+          <p className="font-semibold text-indigo-700 uppercase tracking-wider mb-2">Engine Configuration Preview</p>
+          <p>🔒 Isolation below trust score: <strong>{settings.isolationThreshold}</strong></p>
+          <p>🔴 Critical alert at anomaly score: <strong>≥{settings.criticalThreshold}</strong></p>
+          <p>🟠 High alert at anomaly score: <strong>≥{settings.highThreshold}</strong></p>
+          <p>⚡ Sensitivity multiplier: <strong>{settings.sensitivity === 'Conservative' ? '0.7×' : settings.sensitivity === 'Balanced' ? '1.0×' : '1.35×'}</strong></p>
+          <p>🔁 Auto-isolate: <strong>{settings.autoIsolate ? 'Enabled' : 'Disabled'}</strong></p>
         </div>
       </SectionCard>
 
@@ -353,26 +374,20 @@ export default function SettingsPage() {
           <Toggle
             label="Dashboard Alerts"
             sub="Show real-time alerts within the SOC dashboard"
-            checked={dashboardAlerts}
-            onChange={setDashboardAlerts}
-          />
-          <Toggle
-            label="Email Notifications"
-            sub="Send alert emails to registered analyst accounts"
-            checked={emailNotifications}
-            onChange={setEmailNotifications}
+            checked={settings.dashboardAlerts}
+            onChange={(v) => update({ dashboardAlerts: v })}
           />
           <Toggle
             label="SOC Escalation Alerts"
             sub="Escalate critical threats to the security operations team"
-            checked={socEscalation}
-            onChange={setSocEscalation}
+            checked={settings.socEscalation}
+            onChange={(v) => update({ socEscalation: v })}
           />
           <Toggle
             label="Auto Incident Escalation"
             sub="Automatically escalate unresolved incidents after 30 minutes"
-            checked={autoEscalation}
-            onChange={setAutoEscalation}
+            checked={settings.autoEscalation}
+            onChange={(v) => update({ autoEscalation: v })}
           />
         </div>
       </SectionCard>
@@ -386,10 +401,10 @@ export default function SettingsPage() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
-            { label: "MongoDB Atlas", sub: "Primary database cluster" },
-            { label: "Monitoring Engine", sub: "Behavioral analysis service" },
-            { label: "Threat Detection Engine", sub: "AI anomaly classifier" },
-            { label: "API Gateway", sub: "REST API layer" },
+            { label: "MongoDB Atlas",                sub: "Primary database cluster" },
+            { label: "Trust Intelligence Engine",    sub: "Behavioral anomaly scoring" },
+            { label: "Threat Detection Pipeline",    sub: "Alert severity classifier" },
+            { label: "API Gateway",                  sub: "REST API layer" },
           ].map((svc) => (
             <div
               key={svc.label}
@@ -460,9 +475,9 @@ export default function SettingsPage() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { label: "Export Threat Report", sub: "PDF / CSV", color: "border-red-200 hover:bg-red-50 hover:border-red-300 text-red-700" },
-            { label: "Download Activity Logs", sub: "JSON / CSV", color: "border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700" },
-            { label: "Generate Incident Summary", sub: "PDF Report", color: "border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 text-indigo-700" },
+            { label: "Export Threat Report",        sub: "PDF / CSV", color: "border-red-200 hover:bg-red-50 hover:border-red-300 text-red-700" },
+            { label: "Download Activity Logs",      sub: "JSON / CSV", color: "border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700" },
+            { label: "Generate Incident Summary",   sub: "PDF Report", color: "border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 text-indigo-700" },
           ].map((btn) => (
             <button
               key={btn.label}

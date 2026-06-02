@@ -1,11 +1,12 @@
 import { Users, AlertTriangle, ShieldCheck, UserX } from 'lucide-react';
+import type { IDashboardStats } from '@/types';
 
-export default function KPIStats({ stats }: { stats: any }) {
+export default function KPIStats({ stats }: { stats: IDashboardStats | null }) {
   const kpis = [
-    { label: 'Active Employees', value: stats?.activeEmployees || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Threats Detected', value: stats?.threatsDetected || 0, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Avg Trust Score', value: stats?.avgTrustScore || 0, icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Isolated Sessions', value: stats?.isolatedSessions || 0, icon: UserX, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Active Employees', value: stats?.activeEmployees ?? 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Threats Detected', value: stats?.threatsDetected ?? 0, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Avg Trust Score', value: stats?.avgTrustScore ?? 0, icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Isolated Sessions', value: stats?.isolatedSessions ?? 0, icon: UserX, color: 'text-orange-600', bg: 'bg-orange-50' },
   ];
 
   return (

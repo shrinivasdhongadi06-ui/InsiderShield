@@ -1,20 +1,3 @@
-import mongoose from "mongoose";
-
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI");
-}
-
-export async function connectDB() {
-  try {
-    if (mongoose.connection.readyState === 1) {
-  return;
-}
-
-await mongoose.connect(MONGODB_URI);
-console.log("MongoDB Connected");
-  } catch (error) {
-    console.log(error);
-  }
-}
+// Re-exports from the centralized lib location.
+// Kept for backward compatibility. Import from '@/lib/mongodb' directly in new code.
+export { connectDB } from '@/lib/mongodb';

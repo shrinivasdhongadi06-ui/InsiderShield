@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Bell, AlertTriangle, User, X, Menu } from "lucide-react";
+import { getTrustScoreColor } from "@/utils";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Search result display types ───────────────────────────────────────────────────────
 interface EmpResult {
   _id: string;
   name: string;
@@ -20,7 +21,7 @@ interface AlertResult {
   title: string;
   severity: string;
   status: string;
-  employeeId?: { name: string };
+  employeeId?: { name?: string } | null;
 }
 
 interface SearchResults {
@@ -28,12 +29,7 @@ interface SearchResults {
   alerts: AlertResult[];
 }
 
-// ─── Trust colour helper ────────────────────────────────────────────────────────
-function trustColor(score: number) {
-  if (score >= 80) return "text-green-600";
-  if (score >= 60) return "text-orange-500";
-  return "text-red-600";
-}
+// ─── Severity badge colors ───────────────────────────────────────────────────
 
 const SEV_COLOR: Record<string, string> = {
   Critical: "bg-red-100 text-red-700",
@@ -99,7 +95,7 @@ function SearchDropdown({
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right">
-                    <p className={`text-sm font-bold ${trustColor(emp.currentTrustScore)}`}>
+                    <p className={`text-sm font-bold ${getTrustScoreColor(emp.currentTrustScore ?? 0)}`}>
                       {emp.currentTrustScore}
                     </p>
                     <p className="text-[10px] text-slate-400">trust</p>
@@ -191,8 +187,10 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     setSearching(true);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults(data);
+      const json = await res.json();
+      // Unwrap standardized { success, data } response
+      const data = json?.success ? json.data : json;
+      setResults(data ?? null);
     } catch {
       setResults(null);
     } finally {

@@ -1,32 +1,53 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/app/lib/mongodb';
+import { NextRequest } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
 import { Alert } from '@/models/Alert';
+import { successResponse, errorResponse } from '@/lib/apiHandler';
+import {
+  parsePagination,
+  buildPaginationMeta,
+  parseSort,
+  buildEmployeeIdFilter,
+} from '@/lib/queryUtils';
+
+// ─── GET /api/alerts ──────────────────────────────────────────────────────────
+// Supports: severity, status, employeeId, page, pageSize, sortBy, sortOrder
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const severity = searchParams.get('severity'); // Critical | High | Medium | Low
-    const status = searchParams.get('status');     // Open | Investigating | Resolved | Isolated
+    const severity = searchParams.get('severity');
+    const status = searchParams.get('status');
+    const employeeId = searchParams.get('employeeId');
 
-    const query: Record<string, any> = {};
+    // Build query
+    const query: Record<string, unknown> = {};
     if (severity) query.severity = severity;
-    if (status) {
-      if (status === 'Resolved') {
-        query.status = 'Resolved';
-      } else {
-        query.status = status;
-      }
-    }
+    if (status) query.status = status;
 
-    const alerts = await Alert.find(query)
-      .sort({ timestamp: -1 })
-      .limit(100)
-      .populate('employeeId', 'name email department currentTrustScore');
+    const empFilter = buildEmployeeIdFilter(employeeId);
+    Object.assign(query, empFilter);
 
-    return NextResponse.json(alerts);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Pagination + Sort
+    const pagination = parsePagination(searchParams);
+    const sort = parseSort(searchParams, 'timestamp', 'desc');
+
+    const [total, alerts] = await Promise.all([
+      Alert.countDocuments(query),
+      Alert.find(query)
+        .sort(sort)
+        .skip(pagination.skip)
+        .limit(pagination.pageSize)
+        .populate('employeeId', 'name email department currentTrustScore'),
+    ]);
+
+    const paginationMeta = buildPaginationMeta(total, pagination);
+
+    return successResponse({ items: alerts, pagination: paginationMeta });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch alerts';
+    console.error('[/api/alerts]', message);
+    return errorResponse(message);
   }
 }
