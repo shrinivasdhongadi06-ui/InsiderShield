@@ -74,14 +74,16 @@ export default function EmployeePortalLogin() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <label htmlFor="employee-select" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-blue-400" /> Select Your Identity
                 </label>
                 <div className="relative">
                   <select
+                    id="employee-select"
+                    data-testid="employee-select"
                     value={selectedId}
                     onChange={(e) => setSelectedId(e.target.value)}
-                    className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/45 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm shadow-inner"
+                    className="w-full bg-slate-900/60 border border-slate-880 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/45 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm shadow-inner"
                   >
                     {employees.map((emp) => (
                       <option key={emp._id} value={emp._id} className="bg-slate-950 text-slate-200">
@@ -99,6 +101,7 @@ export default function EmployeePortalLogin() {
 
               <button
                 type="submit"
+                data-testid="employee-login-button"
                 disabled={!selectedId}
                 className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:via-indigo-500 hover:to-violet-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 hover:-translate-y-0.5 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
               >

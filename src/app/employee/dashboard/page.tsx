@@ -579,11 +579,13 @@ export default function EmployeeWorkspacePortal() {
             {/* Location Selection & Authentication */}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <label htmlFor="location-select" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-blue-400" /> Simulated Location
                 </label>
                 <div className="relative">
                   <select
+                    id="location-select"
+                    data-testid="location-select"
                     value={simulatedLocation}
                     onChange={(e) => setSimulatedLocation(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
@@ -606,6 +608,7 @@ export default function EmployeeWorkspacePortal() {
               <button
                 onClick={handlePortalLogin}
                 disabled={submitting}
+                data-testid="unlock-workstation-button"
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/10 hover:shadow-blue-500/20 flex items-center justify-center gap-2 text-xs"
               >
                 {submitting ? (

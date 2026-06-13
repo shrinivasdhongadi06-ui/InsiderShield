@@ -25,8 +25,10 @@ export default function LoginPage() {
 
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Admin</label>
+            <label htmlFor="admin-email" className="block text-sm font-medium text-slate-700 mb-1">Admin</label>
             <input 
+              id="admin-email"
+              data-testid="admin-email-input"
               type="text" 
               className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
               placeholder="admin@insidershield.local"
@@ -34,9 +36,11 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Access Token</label>
+            <label htmlFor="admin-password" className="block text-sm font-medium text-slate-700 mb-1">Access Token</label>
             <div className="relative">
               <input 
+                id="admin-password"
+                data-testid="admin-password-input"
                 type={showPassword ? "text" : "password"}
                 className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
                 placeholder="••••••••••••"
@@ -57,8 +61,8 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <Link href="/dashboard" className="block mt-6">
-            <button type="button" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5">
+          <Link href="/dashboard" className="block mt-6" data-testid="admin-submit-link">
+            <button type="button" data-testid="admin-submit-button" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5">
               Authenticate
             </button>
           </Link>
